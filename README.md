@@ -67,3 +67,120 @@ Wildfires pose a severe threat to ecosystems, human settlements, and biodiversit
 
 ---
 
+## 🤖 Machine Learning Models
+
+### 1️⃣ Support Vector Machine (SVM)
+- Kernel: RBF (Radial Basis Function)
+- Regularization parameter C = 1.0
+- Probability estimates enabled
+- Best for high-dimensional feature spaces
+
+### 2️⃣ Random Forest
+- 200 decision trees (estimators)
+- Max depth: 10
+- Provides feature importance scores
+- Robust against overfitting
+
+### 3️⃣ XGBoost
+- 200 boosting rounds
+- Learning rate: 0.1
+- Max depth: 6
+- State-of-the-art gradient boosting
+
+---
+
+## 🔄 Workflow
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Raw Dataset    │───▶│  Preprocessing   │───▶│  Feature Eng.   │
+│  (Algerian FF)   │    │  & Cleaning      │    │  & Selection    │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                                       │
+                              ┌─────────────────────────┘
+                              ▼
+                    ┌──────────────────┐
+                    │  Train/Test Split │
+                    │   (80/20)        │
+                    └──────────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+   ┌─────────────┐   ┌──────────────┐   ┌──────────────┐
+   │     SVM     │   │ Random Forest│   │   XGBoost    │
+   └─────────────┘   └──────────────┘   └──────────────┘
+          │                   │                   │
+          └───────────────────┼───────────────────┘
+                              ▼
+                    ┌──────────────────┐
+                    │   Evaluation     │
+                    │  & Comparison    │
+                    └──────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    ▼                   ▼
+           ┌──────────────┐   ┌──────────────┐
+           │ Visualizations│   │  Streamlit   │
+           │  (PNG plots)  │   │  Web App     │
+           └──────────────┘   └──────────────┘
+```
+
+**Step-by-step:**
+1. **Data Collection** — Algerian Forest Fire Dataset (CSV)
+2. **Preprocessing** — Null handling, encoding, standardization (Member 1)
+3. **Model Training** — SVM, Random Forest, XGBoost (Member 2)
+4. **Evaluation** — Accuracy, Precision, Recall, F1-Score, Confusion Matrices
+5. **Visualization** — Professional plots and charts (Member 3)
+6. **Deployment** — Interactive Streamlit web application (Member 3)
+
+---
+
+## 📈 Visualization Results
+
+The following visualizations are generated automatically by `main.py`:
+
+| # | Visualization | Description |
+|---|--------------|-------------|
+| 1 | `accuracy_comparison.png` | Bar chart comparing model accuracies |
+| 2 | `metrics_comparison.png` | Grouped bars for all metrics across models |
+| 3 | `feature_importance_*.png` | Feature importance (RF & XGBoost) |
+| 4 | `risk_distribution.png` | Pie + bar chart of risk levels |
+| 5 | `confusion_matrix_*.png` | Per-model confusion matrix heatmaps |
+| 6 | `confusion_matrices_all.png` | Side-by-side comparison |
+| 7 | `prediction_probs_*.png` | Prediction probability distributions |
+| 8 | `correlation_heatmap.png` | Feature correlation matrix |
+| 9 | `class_distribution.png` | Binary target class balance |
+| 10 | `model_radar_chart.png` | Radar/spider chart model comparison |
+
+All plots are saved to `outputs/plots/` in high-resolution PNG format.
+
+---
+
+## 🚀 How to Run the Project
+
+### Prerequisites
+- Python 3.9 or higher
+- pip package manager
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/your-username/Wildfire-Risk-Classification.git
+cd Wildfire-Risk-Classification
+
+# 2. Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate        # Linux/Mac
+venv\Scripts\activate           # Windows
+
+# 3. Install dependencies
+pip install -r requirements.txt
+```
+
+### Run the Pipeline
+
+```bash
+# Generate predictions, metrics, and all visualizations
+python main.py
+```
