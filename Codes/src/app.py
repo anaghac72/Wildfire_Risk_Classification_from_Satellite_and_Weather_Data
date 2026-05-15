@@ -29,3 +29,46 @@ from src.utils import (
 )
 
 warnings.filterwarnings("ignore")
+
+# ── Page Configuration ─────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="Wildfire Risk Classifier",
+    page_icon="🔥",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ── Custom CSS ─────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.2rem; font-weight: 800;
+        background: linear-gradient(90deg, #F59E0B, #EF4444, #DC2626);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        text-align: center; padding: 10px 0;
+    }
+    .sub-header {
+        text-align: center; color: #6B7280; font-size: 1rem; margin-bottom: 20px;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #1F2937, #374151);
+        padding: 20px; border-radius: 12px; text-align: center;
+        color: white; margin: 5px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .metric-value {
+        font-size: 2rem; font-weight: 700; color: #F59E0B;
+    }
+    .metric-label {
+        font-size: 0.85rem; color: #9CA3AF; margin-top: 5px;
+    }
+    .risk-low    { color: #22C55E; font-weight: bold; font-size: 1.5rem; }
+    .risk-medium { color: #F59E0B; font-weight: bold; font-size: 1.5rem; }
+    .risk-high   { color: #EF4444; font-weight: bold; font-size: 1.5rem; }
+    .stButton > button {
+        background: linear-gradient(90deg, #F59E0B, #EF4444);
+        color: white; border: none; border-radius: 8px;
+        padding: 0.5rem 2rem; font-weight: 600;
+    }
+</style>
+""", unsafe_allow_html=True)
