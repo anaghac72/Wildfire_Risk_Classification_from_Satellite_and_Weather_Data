@@ -72,3 +72,56 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# ── Helpers ────────────────────────────────────────────────────────────────
+MODELS_DIR = os.path.join(PROJECT_ROOT, "models")
+PLOTS_DIR = os.path.join(PROJECT_ROOT, "outputs", "plots")
+
+
+@st.cache_resource
+def load_models():
+    """Load all available models from disk."""
+    models = {}
+    for name, fname in MODEL_FILES.items():
+        path = os.path.join(MODELS_DIR, fname)
+        if os.path.exists(path):
+            models[name] = joblib.load(path)
+    return models
+
+
+def get_risk_label(prediction, probabilities=None):
+    """Map binary prediction to risk string with optional confidence."""
+    if prediction == 1:
+        conf = probabilities[1] * 100 if probabilities is not None else 0
+        if conf >= 80:
+            return "High", conf
+        return "Medium", conf
+    return "Low", (probabilities[0] * 100 if probabilities is not None else 100)
+
+
+# ── Display-friendly feature names (UI only) ──────────────────────────────
+FEATURE_DISPLAY_NAMES = {
+    "Temperature": "Temperature",
+    "RH": "Humidity",
+    "Ws": "Wind Speed",
+    "FFMC": "Fuel Moisture",
+    "DC": "Drought Index",
+    "ISI": "Fire Spread Index",
+    "BUI": "Burn Index",
+    "FWI": "Fire Risk Index",
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  SIDEBAR
+# ══════════════════════════════════════════════════════════════════════════
+st.sidebar.markdown("## 🔥 Navigation")
+page = st.sidebar.radio(
+    "Go to", ["🏠 Home", "📊 Predict", "📈 Visualizations", "📋 About"],
+    label_visibility="collapsed",
+)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    "<small>Wildfire Risk Classifier v1.0</small>", unsafe_allow_html=True
+)
