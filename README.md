@@ -2,4 +2,5 @@
 
 # Course Details
 |Name|Course|RegNo|
+|----|------|------|
 |Anagha C| DACS|253126|
