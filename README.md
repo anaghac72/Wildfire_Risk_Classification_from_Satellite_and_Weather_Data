@@ -12,10 +12,10 @@
 
 ## 👥 Team Members
 
-| # | Name | Role | Responsibilities |
+| # | Name | Reg | Responsibilities |
 |---|------|------|-----------------|
-| 1 | Anagha C | Data Engineer | Data preprocessing, cleaning, and Exploratory Data Analysis |
-| 2 | Savin Jees | ML Engineer | Model implementation — SVM, Random Forest, XGBoost |
-| 3 | V A Sreehari | Viz & Docs | Visualization, documentation, Streamlit deployment |
+| 1 | Anagha C | Data preprocessing, cleaning, and Exploratory Data Analysis |
+| 2 | Savin Jees | Model implementation — SVM, Random Forest, XGBoost |
+| 3 | V A Sreehari | Visualization, documentation, Streamlit deployment |
 
 ---
