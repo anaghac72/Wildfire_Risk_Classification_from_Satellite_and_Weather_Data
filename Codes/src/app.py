@@ -125,3 +125,52 @@ st.sidebar.markdown("---")
 st.sidebar.markdown(
     "<small>Wildfire Risk Classifier v1.0</small>", unsafe_allow_html=True
 )
+
+# ══════════════════════════════════════════════════════════════════════════
+#  PAGE — HOME
+# ══════════════════════════════════════════════════════════════════════════
+if page == "🏠 Home":
+    st.markdown('<h1 class="main-header">🔥 Wildfire Risk Classification</h1>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<p class="sub-header">Classify wildfire risk using satellite '
+        'and weather data with ML models</p>',
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">3</div>
+            <div class="metric-label">ML Models</div>
+        </div>""", unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">8</div>
+            <div class="metric-label">Features</div>
+        </div>""", unsafe_allow_html=True)
+    with col3:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">243</div>
+            <div class="metric-label">Samples</div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("### 📌 Project Overview")
+    st.markdown("""
+    This application classifies **wildfire risk** into **Low**, **Medium**,
+    and **High** categories using the **Algerian Forest Fire Dataset**.
+
+    **Models Used:**
+    | Model | Description |
+    |-------|-------------|
+    | SVM | Support Vector Machine with RBF kernel |
+    | Random Forest | Ensemble of 200 decision trees |
+    | XGBoost | Gradient boosted trees (200 estimators) |
+
+    **Key Features:** Temperature, Humidity, Wind Speed,
+    Fuel Moisture, Drought Index, Fire Spread Index, Burn Index, Fire Risk Index
+    """)
