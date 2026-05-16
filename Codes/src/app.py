@@ -1,60 +1,51 @@
-import pandas as pd
+import streamlit as st
+import numpy as np
+from utils import predict_risk
 
-# =========================
-# CONFIG CONSTANTS
-# =========================
+# Page config
+st.set_page_config(page_title="Wildfire Risk App", layout="centered")
 
-FEATURE_COLUMNS = [
-    "temperature",
-    "humidity",
-    "wind_speed",
-    "rainfall",
-    "vegetation_index"
+# Title
+st.title("🔥 Wildfire Risk Classification System")
+st.markdown("Predict wildfire risk using satellite + weather parameters")
+
+st.sidebar.header("Input Parameters")
+
+# Example features (you can modify based on your dataset)
+temperature = st.sidebar.slider("Temperature (°C)", 0, 50, 25)
+humidity = st.sidebar.slider("Humidity (%)", 0, 100, 40)
+wind_speed = st.sidebar.slider("Wind Speed (km/h)", 0, 100, 20)
+rainfall = st.sidebar.slider("Rainfall (mm)", 0, 200, 10)
+vegetation_index = st.sidebar.slider("Vegetation Index (NDVI)", 0.0, 1.0, 0.5)
+
+# Input vector
+input_data = [
+    temperature,
+    humidity,
+    wind_speed,
+    rainfall,
+    vegetation_index
 ]
 
-TARGET_COLUMN = "risk_level"
+# Prediction button
+if st.button("Predict Wildfire Risk"):
+    result = predict_risk(input_data)
 
+    st.subheader("Prediction Result:")
+    st.success(result)
 
-MODEL_FILES = {
-    "svm": "svm.pkl",
-    "rf": "random_forest.pkl",
-    "xgb": "xgboost.pkl"
-}
+# Optional visualization section
+st.markdown("---")
+st.subheader("📊 Input Overview")
 
+st.write({
+    "Temperature": temperature,
+    "Humidity": humidity,
+    "Wind Speed": wind_speed,
+    "Rainfall": rainfall,
+    "Vegetation Index": vegetation_index
+})
 
-# =========================
-# DATA LOADING
-# =========================
-def load_dataset(path):
-    df = pd.read_csv(path)
-    df = df.dropna()
-    return df
-
-
-def get_features_and_target(df):
-    X = df[FEATURE_COLUMNS]
-    y = df[TARGET_COLUMN]
-    return X, y
-
-
-# =========================
-# METRICS (OPTIONAL)
-# =========================
-def compute_metrics(y_true, y_pred):
-    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
-    return {
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, average="weighted"),
-        "recall": recall_score(y_true, y_pred, average="weighted"),
-        "f1": f1_score(y_true, y_pred, average="weighted"),
-    }
-
-
-def assign_risk_levels(pred):
-    mapping = {
-        0: "Low Risk",
-        1: "Medium Risk",
-        2: "High Risk"
-    }
-    return mapping.get(pred, "Unknown")
+# Simple gauge-style interpretation
+st.markdown("### Risk Interpretation")
+st.info("Higher wind + temperature and lower humidity increases wildfire risk.")
