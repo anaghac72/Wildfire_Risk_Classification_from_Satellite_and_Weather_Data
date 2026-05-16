@@ -1,60 +1,26 @@
-import pandas as pd
+import numpy as np
+import joblib
 
-# =========================
-# CONFIG CONSTANTS
-# =========================
+# Load model and scaler
+model = joblib.load("model.pkl")
+scaler = joblib.load("scaler.pkl")
 
-FEATURE_COLUMNS = [
-    "temperature",
-    "humidity",
-    "wind_speed",
-    "rainfall",
-    "vegetation_index"
-]
-
-TARGET_COLUMN = "risk_level"
-
-
-MODEL_FILES = {
-    "svm": "svm.pkl",
-    "rf": "random_forest.pkl",
-    "xgb": "xgboost.pkl"
-}
+def preprocess_input(data):
+    """
+    Convert input into model-ready format
+    """
+    arr = np.array(data).reshape(1, -1)
+    arr_scaled = scaler.transform(arr)
+    return arr_scaled
 
 
-# =========================
-# DATA LOADING
-# =========================
-def load_dataset(path):
-    df = pd.read_csv(path)
-    df = df.dropna()
-    return df
+def predict_risk(data):
+    processed = preprocess_input(data)
+    prediction = model.predict(processed)[0]
 
-
-def get_features_and_target(df):
-    X = df[FEATURE_COLUMNS]
-    y = df[TARGET_COLUMN]
-    return X, y
-
-
-# =========================
-# METRICS (OPTIONAL)
-# =========================
-def compute_metrics(y_true, y_pred):
-    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
-    return {
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, average="weighted"),
-        "recall": recall_score(y_true, y_pred, average="weighted"),
-        "f1": f1_score(y_true, y_pred, average="weighted"),
-    }
-
-
-def assign_risk_levels(pred):
-    mapping = {
-        0: "Low Risk",
-        1: "Medium Risk",
-        2: "High Risk"
-    }
-    return mapping.get(pred, "Unknown")
+    if prediction == 0:
+        return "Low Risk 🔵"
+    elif prediction == 1:
+        return "Medium Risk 🟡"
+    else:
+        return "High Risk 🔴"
