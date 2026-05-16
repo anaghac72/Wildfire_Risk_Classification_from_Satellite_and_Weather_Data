@@ -184,3 +184,77 @@ pip install -r requirements.txt
 # Generate predictions, metrics, and all visualizations
 python main.py
 ```
+
+### Launch Streamlit App
+
+```bash
+# Start the interactive web application
+streamlit run src/app.py
+```
+
+---
+
+## 🌐 Streamlit Deployment
+
+### Local Deployment
+```bash
+streamlit run src/app.py
+```
+
+### Cloud Deployment (Streamlit Community Cloud)
+1. Push the repository to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Connect your GitHub repository
+4. Set the main file path to `src/app.py`
+5. Click **Deploy**
+
+> **Note:** Ensure `requirements.txt` is in the repository root for automatic dependency installation.
+
+---
+
+## 📂 Project Structure
+
+```
+Wildfire-Risk-Classification/
+│
+├── 📁 data/                        # Raw and processed datasets
+│   └── Algerian_forest_fires_dataset.csv
+│
+├── 📁 notebooks/                   # Jupyter notebooks (EDA, experiments)
+│   └── EDA_Preprocessing.ipynb
+│
+├── 📁 models/                      # Serialized trained models (.pkl)
+│   ├── svm_model.pkl
+│   ├── rf_model.pkl
+│   └── xgb_model.pkl
+│
+├── 📁 outputs/
+│   ├── 📁 plots/                   # Generated visualization PNGs
+│   │   ├── accuracy_comparison.png
+│   │   ├── metrics_comparison.png
+│   │   ├── confusion_matrix_*.png
+│   │   ├── feature_importance_*.png
+│   │   ├── risk_distribution.png
+│   │   ├── correlation_heatmap.png
+│   │   ├── class_distribution.png
+│   │   ├── model_radar_chart.png
+│   │   └── prediction_probs_*.png
+│   │
+│   └── 📁 predictions/            # Prediction result CSVs
+│       ├── svm_predictions.csv
+│       ├── random_forest_predictions.csv
+│       ├── xgboost_predictions.csv
+│       └── all_models_predictions.csv
+│
+├── 📁 src/
+│   ├── visualizations.py          # Visualization generation module
+│   ├── utils.py                   # Utility & helper functions
+│   └── app.py                     # Streamlit web application
+│
+├── cleaned_wildfire_dataset.csv   # Preprocessed dataset
+├── main.py                        # Main execution pipeline
+├── requirements.txt               # Python dependencies
+└── README.md                      # Project documentation
+```
+
+---
