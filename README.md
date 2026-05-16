@@ -292,6 +292,3 @@ This project is developed for **academic purposes** as part of university course
 
 ---
 
-<p align="center">
-  Made with ❤️ by the Wildfire Risk Classification Team
-</p>
