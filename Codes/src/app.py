@@ -18,6 +18,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+import utils
 
 # Add project root to path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
