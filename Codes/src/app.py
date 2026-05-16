@@ -93,6 +93,30 @@ st.markdown("""
 MODELS_DIR = os.path.join(PROJECT_ROOT, "models")
 PLOTS_DIR = os.path.join(PROJECT_ROOT, "outputs", "plots")
 
+# ── Raw-data statistics for z-score scaling ────────────────────────────────
+# These are the mean/std of the original Algerian Forest Fire dataset features
+# BEFORE standardization. Used to transform raw manual inputs into the same
+# z-score space the models were trained on.
+RAW_FEATURE_STATS = {
+    "Temperature": {"mean": 32.1523, "std": 3.6280},
+    "RH":          {"mean": 62.0412, "std": 14.8282},
+    "Ws":          {"mean": 15.4938, "std": 2.8114},
+    "FFMC":        {"mean": 77.8424, "std": 14.3496},
+    "DC":          {"mean": 49.4309, "std": 47.6656},
+    "ISI":         {"mean": 4.7424,  "std": 4.1542},
+    "BUI":         {"mean": 16.6905, "std": 14.2284},
+    "FWI":         {"mean": 7.0354,  "std": 7.4406},
+}
+
+
+def standardize_input(raw_df: pd.DataFrame) -> pd.DataFrame:
+    """Convert raw feature values to z-scores using training-set statistics."""
+    scaled = raw_df.copy()
+    for col in FEATURE_COLUMNS:
+        stats = RAW_FEATURE_STATS[col]
+        scaled[col] = (scaled[col] - stats["mean"]) / stats["std"]
+    return scaled
+
 
 @st.cache_resource
 def load_models():
@@ -107,25 +131,26 @@ def load_models():
 
 def get_prediction_label(prediction, probabilities=None):
     """Map binary prediction to risk label with confidence.
-    Class 1 = High Risk (fire), Class 0 = Low Risk (no fire).
+    Class 0 = High Risk (fire), Class 1 = Low Risk (no fire).
+    This matches the Algerian dataset encoding: 'fire' → 0, 'not fire' → 1.
     """
-    if prediction == 1:
-        conf = probabilities[1] * 100 if probabilities is not None else 100
+    if prediction == 0:
+        conf = probabilities[0] * 100 if probabilities is not None else 100
         return "High Risk 🔥", conf
-    conf = probabilities[0] * 100 if probabilities is not None else 100
+    conf = probabilities[1] * 100 if probabilities is not None else 100
     return "Low Risk ✅", conf
 
 
 # ── Display-friendly feature names (UI only) ──────────────────────────────
 FEATURE_DISPLAY_NAMES = {
-    "Temperature": "Temperature",
-    "RH": "Humidity",
-    "Ws": "Wind Speed",
-    "FFMC": "Fuel Moisture",
-    "DC": "Drought Index",
-    "ISI": "Fire Spread Index",
-    "BUI": "Burn Index",
-    "FWI": "Fire Risk Index",
+    "Temperature": "Temperature (°C)",
+    "RH": "Humidity (%)",
+    "Ws": "Wind Speed (km/h)",
+    "FFMC": "Fuel Moisture (FFMC)",
+    "DC": "Drought Index (DC)",
+    "ISI": "Fire Spread Index (ISI)",
+    "BUI": "Burn Index (BUI)",
+    "FWI": "Fire Risk Index (FWI)",
 }
 
 
@@ -224,13 +249,14 @@ elif page == "📊 Predict":
                 model_name = st.selectbox("Select Model", list(models.keys()))
                 if st.button("🔥 Run Predictions", use_container_width=True):
                     model = models[model_name]
-                    X_input = input_df[FEATURE_COLUMNS]
+                    X_raw = input_df[FEATURE_COLUMNS]
+                    X_input = standardize_input(X_raw)
                     preds = model.predict(X_input)
 
                     result_df = input_df.copy()
                     result_df["Prediction"] = preds
                     result_df["Prediction_Label"] = [
-                        "High Risk 🔥" if p == 1 else "Low Risk ✅" for p in preds
+                        "High Risk 🔥" if p == 0 else "Low Risk ✅" for p in preds
                     ]
 
                     if hasattr(model, "predict_proba"):
@@ -253,25 +279,34 @@ elif page == "📊 Predict":
 
     # ── Tab 2: Manual Input ────────────────────────────────────────────
     with tab2:
-        st.markdown("Enter feature values below:")
+        st.markdown("Enter feature values in **raw units** (the app auto-scales for the model):")
         cols = st.columns(3)
         inputs = {}
+        # Sensible defaults: typical non-fire conditions
+        defaults = {
+            "Temperature": 30.0, "RH": 60.0, "Ws": 14.0, "FFMC": 75.0,
+            "DC": 40.0, "ISI": 3.0, "BUI": 12.0, "FWI": 4.0,
+        }
         for i, feat in enumerate(FEATURE_COLUMNS):
             display = FEATURE_DISPLAY_NAMES.get(feat, feat)
             with cols[i % 3]:
-                inputs[feat] = st.number_input(display, value=0.0, format="%.4f", key=f"manual_{feat}")
+                inputs[feat] = st.number_input(
+                    display, value=defaults.get(feat, 0.0),
+                    format="%.2f", key=f"manual_{feat}",
+                )
 
         model_name = st.selectbox("Model", list(models.keys()), key="manual")
         if st.button("🔥 Predict", key="manual_btn", use_container_width=True):
             model = models[model_name]
-            row = pd.DataFrame([inputs])
-            pred = model.predict(row)[0]
+            raw_row = pd.DataFrame([inputs])
+            scaled_row = standardize_input(raw_row)
+            pred = model.predict(scaled_row)[0]
 
             st.markdown("---")
             if hasattr(model, "predict_proba"):
-                prob = model.predict_proba(row)[0]
+                prob = model.predict_proba(scaled_row)[0]
                 label, conf = get_prediction_label(pred, prob)
-                css_class = "high" if pred == 1 else "low"
+                css_class = "high" if pred == 0 else "low"
 
                 # Single clean prediction box
                 st.markdown(
@@ -283,10 +318,10 @@ elif page == "📊 Predict":
                     unsafe_allow_html=True,
                 )
 
-                # Probability bar chart  (index 0 = Low Risk, index 1 = High Risk)
+                # Probability bar chart  (index 0 = High Risk, index 1 = Low Risk)
                 fig, ax = plt.subplots(figsize=(6, 1.5))
-                ax.barh(["Low Risk", "High Risk"], [prob[0], prob[1]],
-                        color=["#22C55E", "#EF4444"], height=0.5)
+                ax.barh(["High Risk", "Low Risk"], [prob[0], prob[1]],
+                        color=["#EF4444", "#22C55E"], height=0.5)
                 ax.set_xlim(0, 1)
                 ax.set_title("Class Probabilities", fontsize=10)
                 for i, v in enumerate([prob[0], prob[1]]):
@@ -294,7 +329,7 @@ elif page == "📊 Predict":
                 st.pyplot(fig)
                 plt.close(fig)
             else:
-                label = "High Risk 🔥" if pred == 1 else "Low Risk ✅"
+                label = "High Risk 🔥" if pred == 0 else "Low Risk ✅"
                 st.markdown(
                     f'<div class="prediction-box">'
                     f'<div class="prediction-label">{label}</div>'
