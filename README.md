@@ -207,6 +207,7 @@ streamlit run src/app.py
 3. Connect your GitHub repository
 4. Set the main file path to `src/app.py`
 5. Click **Deploy**
+https://wildfireriskclassificationfromsatelliteandweatherdata-8f7vgejc.streamlit.app/
 
 > **Note:** Ensure `requirements.txt` is in the repository root for automatic dependency installation.
 
