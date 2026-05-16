@@ -1,6 +1,6 @@
 import streamlit as st
 import numpy as np
-from utils import predict_risk
+from utils import predict_risk, preprocess_input, model
 
 # =========================
 # PAGE CONFIG
@@ -11,10 +11,10 @@ st.set_page_config(
 )
 
 st.title("🔥 Wildfire Risk Classification System")
-st.markdown("Predict wildfire risk using satellite + weather features")
+st.markdown("ML-based prediction using satellite + weather features")
 
 # =========================
-# SIDEBAR INPUTS (10 FEATURES)
+# INPUT SECTION (10 FEATURES)
 # =========================
 st.sidebar.header("🌦️ Input Parameters")
 
@@ -23,17 +23,14 @@ humidity = st.sidebar.slider("Humidity (%)", 0, 100, 40)
 wind_speed = st.sidebar.slider("Wind Speed (km/h)", 0, 100, 20)
 rainfall = st.sidebar.slider("Rainfall (mm)", 0, 200, 10)
 
-ndvi = st.sidebar.slider("NDVI (Vegetation Index)", 0.0, 1.0, 0.5)
+ndvi = st.sidebar.slider("NDVI", 0.0, 1.0, 0.5)
 elevation = st.sidebar.slider("Elevation (m)", 0, 3000, 500)
 soil_moisture = st.sidebar.slider("Soil Moisture", 0.0, 1.0, 0.3)
 surface_temp = st.sidebar.slider("Surface Temperature (°C)", 0, 60, 30)
-
 vegetation_index = st.sidebar.slider("Vegetation Index", 0.0, 1.0, 0.6)
 fire_risk_index = st.sidebar.slider("Fire Risk Index", 0.0, 1.0, 0.2)
 
-# =========================
-# INPUT VECTOR (MUST BE 10 FEATURES)
-# =========================
+# Input vector
 input_data = [
     temperature,
     humidity,
@@ -48,31 +45,53 @@ input_data = [
 ]
 
 # =========================
-# PREDICTION
+# PREDICTION SECTION
 # =========================
 st.markdown("---")
 
 if st.button("🔥 Predict Wildfire Risk"):
-    result = predict_risk(input_data)
 
-    st.subheader("Prediction Result:")
+    processed = preprocess_input(input_data)
 
-    if "Low" in result:
-        st.success(result)
-    elif "Medium" in result:
-        st.warning(result)
-    elif "High" in result:
-        st.error(result)
+    # Predict class
+    prediction = model.predict(processed)[0]
+
+    # Predict probabilities
+    probabilities = model.predict_proba(processed)[0]
+    classes = model.classes_
+
+    # =========================
+    # RESULT
+    # =========================
+    st.subheader("📌 Final Prediction")
+
+    if prediction == 0 or "Low" in str(prediction):
+        st.success(f"Low Risk 🔵 ({prediction})")
+    elif prediction == 1 or "Medium" in str(prediction):
+        st.warning(f"Medium Risk 🟡 ({prediction})")
     else:
-        st.error(result)
+        st.error(f"High Risk 🔴 ({prediction})")
+
+    # =========================
+    # PROBABILITY DISPLAY
+    # =========================
+    st.subheader("📊 Prediction Probabilities")
+
+    for cls, prob in zip(classes, probabilities):
+        st.write(f"**{cls}** → {round(prob * 100, 2)}%")
+
+    # Risk confidence meter
+    confidence = np.max(probabilities)
+    st.progress(float(confidence))
+    st.write(f"Confidence Score: {round(confidence * 100, 2)}%")
 
 # =========================
-# INPUT DISPLAY
+# INPUT SUMMARY
 # =========================
 st.markdown("---")
 st.subheader("📊 Input Summary")
 
-st.write({
+st.json({
     "Temperature": temperature,
     "Humidity": humidity,
     "Wind Speed": wind_speed,
@@ -86,10 +105,11 @@ st.write({
 })
 
 # =========================
-# INFO SECTION
+# DEBUG MODE
 # =========================
 st.markdown("---")
-st.info(
-    "💡 Model expects 10 features exactly. "
-    "All inputs must match training dataset used in notebook."
-)
+
+if st.checkbox("🛠 Debug Mode"):
+    st.write("Raw Input:", input_data)
+    st.write("Scaled Input:", preprocess_input(input_data))
+    st.write("Model Classes:", model.classes_)
