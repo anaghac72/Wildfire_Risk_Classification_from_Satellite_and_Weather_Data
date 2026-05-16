@@ -1,5 +1,8 @@
 import pandas as pd
-import os
+
+# =========================
+# CONFIG CONSTANTS
+# =========================
 
 FEATURE_COLUMNS = [
     "temperature",
@@ -9,31 +12,49 @@ FEATURE_COLUMNS = [
     "vegetation_index"
 ]
 
+TARGET_COLUMN = "risk_level"
 
+
+MODEL_FILES = {
+    "svm": "svm.pkl",
+    "rf": "random_forest.pkl",
+    "xgb": "xgboost.pkl"
+}
+
+
+# =========================
+# DATA LOADING
+# =========================
 def load_dataset(path):
     df = pd.read_csv(path)
-
-    # Drop missing values safely
     df = df.dropna()
-
     return df
 
 
 def get_features_and_target(df):
     X = df[FEATURE_COLUMNS]
-    y = df["risk_level"]
+    y = df[TARGET_COLUMN]
     return X, y
 
 
-def ensure_directories(paths):
-    if isinstance(paths, str):
-        paths = [paths]
+# =========================
+# METRICS (OPTIONAL)
+# =========================
+def compute_metrics(y_true, y_pred):
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-    for path in paths:
-        os.makedirs(path, exist_ok=True)
+    return {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred, average="weighted"),
+        "recall": recall_score(y_true, y_pred, average="weighted"),
+        "f1": f1_score(y_true, y_pred, average="weighted"),
+    }
 
 
-def print_banner(text):
-    print("\n" + "=" * 60)
-    print(text)
-    print("=" * 60 + "\n")
+def assign_risk_levels(pred):
+    mapping = {
+        0: "Low Risk",
+        1: "Medium Risk",
+        2: "High Risk"
+    }
+    return mapping.get(pred, "Unknown")
