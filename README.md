@@ -15,7 +15,7 @@
 | # | Name | Reg | Responsibilities |
 |---|------|------|-----------------|
 | 1 | Anagha C | 253126 | Data preprocessing, cleaning, and Exploratory Data Analysis |
-| 2 | Savin Jees |  | Model implementation — SVM, Random Forest, XGBoost |
+| 2 | Savin Jees | 253211 | Model implementation — SVM, Random Forest, XGBoost |
 | 3 | V A Sreehari | 253313 | Visualization, documentation, Streamlit deployment |
 
 ---
