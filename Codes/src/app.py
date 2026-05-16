@@ -1,6 +1,9 @@
 """
 app.py — Streamlit Web Application
 Project: Wildfire Risk Classification from Satellite and Weather Data
+
+Usage:
+    streamlit run app.py
 """
 
 import os
@@ -40,67 +43,71 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.main-header {
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: linear-gradient(90deg, #F59E0B, #EF4444);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-align: center;
-}
+    .main-header {
+        font-size: 2.2rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #F59E0B, #EF4444, #DC2626);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        padding: 10px 0;
+    }
 
-.sub-header {
-    text-align: center;
-    color: #6B7280;
-    margin-bottom: 25px;
-}
+    .sub-header {
+        text-align: center;
+        color: #6B7280;
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
 
-.metric-card {
-    background: linear-gradient(135deg, #1F2937, #374151);
-    padding: 20px;
-    border-radius: 15px;
-    color: white;
-    text-align: center;
-    margin-bottom: 10px;
-}
+    .metric-card {
+        background: linear-gradient(135deg, #1F2937, #374151);
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        color: white;
+        margin: 5px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
 
-.metric-value {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #F59E0B;
-}
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #F59E0B;
+    }
 
-.metric-label {
-    font-size: 1rem;
-    color: #D1D5DB;
-}
+    .metric-label {
+        font-size: 0.85rem;
+        color: #9CA3AF;
+        margin-top: 5px;
+    }
 
-.risk-low {
-    color: #22C55E;
-    font-size: 1.8rem;
-    font-weight: bold;
-}
+    .risk-low {
+        color: #22C55E;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
 
-.risk-medium {
-    color: #F59E0B;
-    font-size: 1.8rem;
-    font-weight: bold;
-}
+    .risk-medium {
+        color: #F59E0B;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
 
-.risk-high {
-    color: #EF4444;
-    font-size: 1.8rem;
-    font-weight: bold;
-}
+    .risk-high {
+        color: #EF4444;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
 
-.stButton > button {
-    background: linear-gradient(90deg, #F59E0B, #EF4444);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 0.6rem 2rem;
-    font-weight: bold;
-}
+    .stButton > button {
+        background: linear-gradient(90deg, #F59E0B, #EF4444);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 2rem;
+        font-weight: 600;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -112,6 +119,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
 
 MODELS_DIR = os.path.join(PROJECT_ROOT, "models")
+PLOTS_DIR = os.path.join(PROJECT_ROOT, "outputs", "plots")
 
 # ─────────────────────────────────────────────────────────────
 # Load Models
@@ -119,51 +127,108 @@ MODELS_DIR = os.path.join(PROJECT_ROOT, "models")
 
 @st.cache_resource
 def load_models():
+    """Load trained ML models"""
+
     models = {}
 
-    for model_name, model_file in MODEL_FILES.items():
-        model_path = os.path.join(MODELS_DIR, model_file)
+    for name, filename in MODEL_FILES.items():
+
+        model_path = os.path.join(MODELS_DIR, filename)
 
         if os.path.exists(model_path):
+
             try:
-                models[model_name] = joblib.load(model_path)
+                models[name] = joblib.load(model_path)
+
             except Exception as e:
-                st.error(f"Error loading {model_name}: {e}")
+                st.error(f"Error loading {name}: {e}")
 
     return models
 
 models = load_models()
 
 # ─────────────────────────────────────────────────────────────
-# Sidebar Navigation
+# Helper Function
 # ─────────────────────────────────────────────────────────────
 
-st.sidebar.title("🔥 Navigation")
+def get_risk_label(prediction, probabilities=None):
+
+    if prediction == 1:
+
+        confidence = (
+            probabilities[1] * 100
+            if probabilities is not None
+            else 0
+        )
+
+        if confidence >= 80:
+            return "High", confidence
+
+        return "Medium", confidence
+
+    confidence = (
+        probabilities[0] * 100
+        if probabilities is not None
+        else 100
+    )
+
+    return "Low", confidence
+
+# ─────────────────────────────────────────────────────────────
+# Display Names
+# ─────────────────────────────────────────────────────────────
+
+FEATURE_DISPLAY_NAMES = {
+    "Temperature": "Temperature",
+    "RH": "Humidity",
+    "Ws": "Wind Speed",
+    "FFMC": "Fuel Moisture",
+    "DC": "Drought Index",
+    "ISI": "Fire Spread Index",
+    "BUI": "Burn Index",
+    "FWI": "Fire Risk Index",
+}
+
+# ════════════════════════════════════════════════════════════
+# Sidebar
+# ════════════════════════════════════════════════════════════
+
+st.sidebar.markdown("## 🔥 Navigation")
 
 page = st.sidebar.radio(
-    "Select Page",
+    "Go to",
     [
         "🏠 Home",
         "📊 Predict",
         "📈 Visualizations",
         "📋 About",
-    ]
+    ],
+    label_visibility="collapsed",
 )
 
-# ─────────────────────────────────────────────────────────────
-# Home Page
-# ─────────────────────────────────────────────────────────────
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    "<small>Wildfire Risk Classifier v1.0</small>",
+    unsafe_allow_html=True,
+)
+
+# ════════════════════════════════════════════════════════════
+# HOME PAGE
+# ════════════════════════════════════════════════════════════
 
 if page == "🏠 Home":
 
     st.markdown(
         '<h1 class="main-header">🔥 Wildfire Risk Classification</h1>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     st.markdown(
-        '<p class="sub-header">Predict wildfire risk using ML models and weather data</p>',
-        unsafe_allow_html=True
+        '<p class="sub-header">'
+        'Classify wildfire risk using satellite and weather data with ML models'
+        '</p>',
+        unsafe_allow_html=True,
     )
 
     col1, col2, col3 = st.columns(3)
@@ -188,16 +253,17 @@ if page == "🏠 Home":
         st.markdown("""
         <div class="metric-card">
             <div class="metric-value">243</div>
-            <div class="metric-label">Dataset Samples</div>
+            <div class="metric-label">Samples</div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("---")
 
-    st.markdown("## 📌 Project Overview")
+    st.markdown("### 📌 Project Overview")
 
-    st.write("""
-    This application predicts wildfire risk using machine learning models.
+    st.markdown("""
+    This application classifies wildfire risk into
+    Low, Medium, and High categories using Machine Learning.
 
     ### Models Used
     - SVM
@@ -215,22 +281,22 @@ if page == "🏠 Home":
     - FWI
     """)
 
-# ─────────────────────────────────────────────────────────────
-# Prediction Page
-# ─────────────────────────────────────────────────────────────
+# ════════════════════════════════════════════════════════════
+# PREDICTION PAGE
+# ════════════════════════════════════════════════════════════
 
 elif page == "📊 Predict":
 
     st.title("📊 Wildfire Risk Prediction")
 
-    st.markdown("Enter environmental parameters below:")
+    st.markdown("Enter environmental values:")
 
     col1, col2 = st.columns(2)
 
     with col1:
         temperature = st.slider("Temperature", 0, 50, 30)
         rh = st.slider("Humidity (RH)", 0, 100, 45)
-        ws = st.slider("Wind Speed (Ws)", 0, 50, 15)
+        ws = st.slider("Wind Speed", 0, 50, 15)
         ffmc = st.slider("FFMC", 0.0, 100.0, 85.0)
 
     with col2:
@@ -244,67 +310,69 @@ elif page == "📊 Predict":
         list(models.keys())
     )
 
-    if st.button("Predict Wildfire Risk"):
+    if st.button("Predict Risk"):
 
-        if selected_model not in models:
-            st.error("Selected model not available.")
+        input_df = pd.DataFrame([[
+            temperature,
+            rh,
+            ws,
+            ffmc,
+            dc,
+            isi,
+            bui,
+            fwi,
+        ]], columns=FEATURE_COLUMNS)
+
+        model = models[selected_model]
+
+        prediction = model.predict(input_df)[0]
+
+        probabilities = None
+
+        if hasattr(model, "predict_proba"):
+            probabilities = model.predict_proba(input_df)[0]
+
+        risk, confidence = get_risk_label(
+            prediction,
+            probabilities,
+        )
+
+        st.markdown("---")
+
+        st.subheader("Prediction Result")
+
+        if risk == "Low":
+
+            st.markdown(
+                '<p class="risk-low">🟢 LOW RISK</p>',
+                unsafe_allow_html=True,
+            )
+
+        elif risk == "Medium":
+
+            st.markdown(
+                '<p class="risk-medium">🟠 MEDIUM RISK</p>',
+                unsafe_allow_html=True,
+            )
+
         else:
 
-            input_data = pd.DataFrame([[
-                temperature,
-                rh,
-                ws,
-                ffmc,
-                dc,
-                isi,
-                bui,
-                fwi
-            ]], columns=FEATURE_COLUMNS)
+            st.markdown(
+                '<p class="risk-high">🔴 HIGH RISK</p>',
+                unsafe_allow_html=True,
+            )
 
-            model = models[selected_model]
+        st.write(f"### Confidence: {confidence:.2f}%")
 
-            prediction = model.predict(input_data)[0]
-
-            probability = 0.0
-
-            if hasattr(model, "predict_proba"):
-                probability = np.max(model.predict_proba(input_data))
-
-            risk = assign_risk_levels(probability)
-
-            st.markdown("---")
-
-            st.subheader("Prediction Result")
-
-            if risk == "Low":
-                st.markdown(
-                    '<p class="risk-low">🟢 LOW RISK</p>',
-                    unsafe_allow_html=True
-                )
-
-            elif risk == "Medium":
-                st.markdown(
-                    '<p class="risk-medium">🟠 MEDIUM RISK</p>',
-                    unsafe_allow_html=True
-                )
-
-            else:
-                st.markdown(
-                    '<p class="risk-high">🔴 HIGH RISK</p>',
-                    unsafe_allow_html=True
-                )
-
-            st.write(f"### Confidence: {probability * 100:.2f}%")
-
-# ─────────────────────────────────────────────────────────────
-# Visualizations Page
-# ─────────────────────────────────────────────────────────────
+# ════════════════════════════════════════════════════════════
+# VISUALIZATION PAGE
+# ════════════════════════════════════════════════════════════
 
 elif page == "📈 Visualizations":
 
-    st.title("📈 Data Visualizations")
+    st.title("📈 Visualizations")
 
-    st.subheader("Feature Importance Example")
+    st.subheader("Feature Importance")
 
     features = FEATURE_COLUMNS
     importance = np.random.rand(len(features))
@@ -314,28 +382,27 @@ elif page == "📈 Visualizations":
     sns.barplot(
         x=importance,
         y=features,
-        ax=ax
+        ax=ax,
     )
 
     ax.set_title("Feature Importance")
 
     st.pyplot(fig)
 
-# ─────────────────────────────────────────────────────────────
-# About Page
-# ─────────────────────────────────────────────────────────────
+# ════════════════════════════════════════════════════════════
+# ABOUT PAGE
+# ════════════════════════════════════════════════════════════
 
 elif page == "📋 About":
 
-    st.title("📋 About Project")
+    st.title("📋 About")
 
-    st.write("""
+    st.markdown("""
     ## Wildfire Risk Classification System
 
-    This project uses Machine Learning algorithms to classify wildfire risk
-    based on satellite and weather data.
+    This project predicts wildfire risk using weather and satellite data.
 
-    ### Technologies Used
+    ### Technologies
     - Python
     - Streamlit
     - Scikit-learn
