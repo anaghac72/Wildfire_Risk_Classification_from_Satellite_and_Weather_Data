@@ -3,19 +3,20 @@ utils.py — Utility Functions
 Project: Wildfire Risk Classification from Satellite and Weather Data
 """
 
+import os
 import numpy as np
 import pandas as pd
-
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
     recall_score,
     f1_score,
     confusion_matrix,
+    classification_report,
 )
 
 # ─────────────────────────────────────────────────────────────
-# Feature and Target Columns
+# Dataset Columns
 # ─────────────────────────────────────────────────────────────
 
 FEATURE_COLUMNS = [
@@ -42,57 +43,48 @@ MODEL_FILES = {
 }
 
 # ─────────────────────────────────────────────────────────────
-# Compute Metrics
+# Compute Evaluation Metrics
 # ─────────────────────────────────────────────────────────────
 
 def compute_metrics(y_true, y_pred):
     """
-    Compute classification evaluation metrics.
+    Compute classification metrics.
     """
 
     metrics = {
         "Accuracy": accuracy_score(y_true, y_pred),
-
-        "Precision": precision_score(
-            y_true,
-            y_pred,
-            average="weighted",
-            zero_division=0,
-        ),
-
-        "Recall": recall_score(
-            y_true,
-            y_pred,
-            average="weighted",
-            zero_division=0,
-        ),
-
-        "F1 Score": f1_score(
-            y_true,
-            y_pred,
-            average="weighted",
-            zero_division=0,
-        ),
+        "Precision": precision_score(y_true, y_pred, average="weighted"),
+        "Recall": recall_score(y_true, y_pred, average="weighted"),
+        "F1 Score": f1_score(y_true, y_pred, average="weighted"),
     }
 
     return metrics
+
 
 # ─────────────────────────────────────────────────────────────
 # Assign Risk Levels
 # ─────────────────────────────────────────────────────────────
 
-def assign_risk_levels(probability):
+def assign_risk_levels(probabilities):
     """
-    Convert prediction probability into wildfire risk level.
+    Convert probability values into risk labels.
     """
 
-    if probability >= 0.80:
-        return "High"
+    risk_levels = []
 
-    elif probability >= 0.50:
-        return "Medium"
+    for prob in probabilities:
 
-    return "Low"
+        if prob >= 0.80:
+            risk_levels.append("High")
+
+        elif prob >= 0.50:
+            risk_levels.append("Medium")
+
+        else:
+            risk_levels.append("Low")
+
+    return risk_levels
+
 
 # ─────────────────────────────────────────────────────────────
 # Confusion Matrix
@@ -103,67 +95,75 @@ def get_confusion_matrix(y_true, y_pred):
     Generate confusion matrix.
     """
 
-    return confusion_matrix(y_true, y_pred)
+    cm = confusion_matrix(y_true, y_pred)
+
+    return pd.DataFrame(
+        cm,
+        index=["Actual No Fire", "Actual Fire"],
+        columns=["Predicted No Fire", "Predicted Fire"],
+    )
+
 
 # ─────────────────────────────────────────────────────────────
-# Prepare Input Data
+# Classification Report
 # ─────────────────────────────────────────────────────────────
 
-def prepare_input_data(input_values):
+def get_classification_report(y_true, y_pred):
     """
-    Convert input dictionary into DataFrame.
+    Return classification report as dictionary.
     """
 
-    df = pd.DataFrame([input_values])
+    return classification_report(
+        y_true,
+        y_pred,
+        output_dict=True,
+    )
+
+
+# ─────────────────────────────────────────────────────────────
+# Load Dataset Helper
+# ─────────────────────────────────────────────────────────────
+
+def load_dataset(csv_path):
+    """
+    Load wildfire dataset.
+    """
+
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"Dataset not found: {csv_path}")
+
+    df = pd.read_csv(csv_path)
+
+    return df
+
+
+# ─────────────────────────────────────────────────────────────
+# Preprocess Input
+# ─────────────────────────────────────────────────────────────
+
+def preprocess_input(input_data):
+    """
+    Convert user input dictionary into dataframe.
+    """
+
+    df = pd.DataFrame([input_data])
 
     return df[FEATURE_COLUMNS]
 
+
 # ─────────────────────────────────────────────────────────────
-# Prediction Helper
+# Risk Color Mapping
 # ─────────────────────────────────────────────────────────────
 
-def predict_fire_risk(model, input_df):
+def get_risk_color(risk_level):
     """
-    Predict wildfire risk and probabilities.
-    """
-
-    prediction = model.predict(input_df)[0]
-
-    if hasattr(model, "predict_proba"):
-        probabilities = model.predict_proba(input_df)[0]
-    else:
-        probabilities = np.array([1 - prediction, prediction])
-
-    return prediction, probabilities
-
-# ─────────────────────────────────────────────────────────────
-# Risk Label Helper
-# ─────────────────────────────────────────────────────────────
-
-def get_risk_label(probability):
-    """
-    Return readable wildfire risk label.
+    Return color for risk label.
     """
 
-    if probability >= 0.80:
-        return "🔴 High Risk"
+    colors = {
+        "Low": "#22C55E",
+        "Medium": "#F59E0B",
+        "High": "#EF4444",
+    }
 
-    elif probability >= 0.50:
-        return "🟠 Medium Risk"
-
-    return "🟢 Low Risk"
-
-# ─────────────────────────────────────────────────────────────
-# Feature Display Names
-# ─────────────────────────────────────────────────────────────
-
-FEATURE_DISPLAY_NAMES = {
-    "Temperature": "Temperature",
-    "RH": "Relative Humidity",
-    "Ws": "Wind Speed",
-    "FFMC": "Fine Fuel Moisture Code",
-    "DC": "Drought Code",
-    "ISI": "Initial Spread Index",
-    "BUI": "Build Up Index",
-    "FWI": "Fire Weather Index",
-}
+    return colors.get(risk_level, "#6B7280")
