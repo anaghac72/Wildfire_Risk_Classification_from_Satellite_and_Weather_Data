@@ -2,7 +2,7 @@ import numpy as np
 import joblib
 
 # Load model and scaler
-model = joblib.load("model.pkl")
+model = joblib.load("xgb_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
 def preprocess_input(data):
